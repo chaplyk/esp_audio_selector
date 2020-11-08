@@ -11,6 +11,8 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
+String status="a";
+
 ESP8266WebServer server(80);
 
 void handleNotFound() {
@@ -21,7 +23,9 @@ void setup(void) {
   pinMode(14, OUTPUT);    // PIN 5, A
   pinMode(12, OUTPUT);    // PIN 6, B
   pinMode(13, OUTPUT);    // PIN 7, C
-  pinMode(15, OUTPUT);    // PIN 8, 
+  pinMode(15, OUTPUT);    // PIN 8, D
+  pinMode(4, INPUT);      // PIN 2, Button
+  
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -46,16 +50,14 @@ void setup(void) {
   server.on("/b", handleB);
   server.on("/c", handleC);
   server.on("/d", handleD);
+  server.on("/status", handleStatus);
   
   server.onNotFound(handleNotFound);
 
   server.begin();
   Serial.println("HTTP server started");
   
-  digitalWrite(12, LOW);
-  digitalWrite(13, LOW);
-  digitalWrite(15, LOW);
-  digitalWrite(14, HIGH);  
+  handleA(); 
 }
 
 void handleA() {
@@ -63,7 +65,8 @@ void handleA() {
   digitalWrite(12, LOW);
   digitalWrite(13, LOW);
   digitalWrite(15, LOW);
-  digitalWrite(14, HIGH);  
+  digitalWrite(14, HIGH); 
+  status="a";
 }
 
 void handleB() {
@@ -71,7 +74,8 @@ void handleB() {
   digitalWrite(14, LOW);
   digitalWrite(13, LOW);
   digitalWrite(15, LOW);
-  digitalWrite(12, HIGH);  
+  digitalWrite(12, HIGH);
+  status="b";
 }
 
 void handleC() {
@@ -80,6 +84,7 @@ void handleC() {
   digitalWrite(12, LOW);
   digitalWrite(15, LOW);
   digitalWrite(13, HIGH);  
+  status="c";
 }
 
 void handleD() {
@@ -88,9 +93,30 @@ void handleD() {
   digitalWrite(12, LOW);
   digitalWrite(13, LOW);
   digitalWrite(15, HIGH);  
+  status="d";
+}
+
+void handleStatus() {
+  server.send(200, "text/plain", status);  
 }
 
 void loop(void) {
+  if (digitalRead(4) == 1){
+    if (status == "a") {
+      handleB();
+    }
+    else if (status == "b") {
+      handleC();
+    }
+    else if (status == "c") {
+      handleD();
+    }
+    else if (status == "d") {
+      handleA();
+    }
+  }
+  
+  delay(800);
   server.handleClient();
   MDNS.update();
 }
